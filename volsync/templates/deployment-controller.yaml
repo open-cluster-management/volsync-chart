@@ -19,6 +19,7 @@ spec:
       {{- end }}
       labels:
         control-plane: {{ include "volsync.fullname" . }}-controller
+        ocm-antiaffinity-selector: "volsync"
         {{- include "volsync.selectorLabels" . | nindent 8 }}
     spec:
       {{- if .Values.global.pullSecret }}
@@ -79,8 +80,15 @@ spec:
       affinity:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      terminationGracePeriodSeconds: 10
-      {{- with .Values.tolerations }}
-      tolerations:
-        {{- toYaml . | nindent 8 }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{ toYaml . | nindent 8 }}
       {{- end }}
+      terminationGracePeriodSeconds: 10
+      tolerations:
+        - key: dedicated
+          operator: Exists
+          effect: NoSchedule
+        - effect: NoSchedule 
+          key: node-role.kubernetes.io/infra 
+          operator: Exists
