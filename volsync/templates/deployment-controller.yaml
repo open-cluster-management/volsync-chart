@@ -6,7 +6,7 @@ metadata:
     control-plane: {{ include "volsync.fullname" . }}-controller
     {{- include "volsync.labels" . | nindent 4 }}
 spec:
-  replicas: {{ .Values.replicaCount }}
+  replicas: {{ .Values.hubconfig.replicaCount }}
   selector:
     matchLabels:
       control-plane: {{ include "volsync.fullname" . }}-controller
@@ -21,9 +21,9 @@ spec:
         control-plane: {{ include "volsync.fullname" . }}-controller
         {{- include "volsync.selectorLabels" . | nindent 8 }}
     spec:
-      {{- with .Values.imagePullSecrets }}
+      {{- if .Values.global.pullSecret }}
       imagePullSecrets:
-        {{- toYaml . | nindent 8 }}
+        - name: {{ .Values.global.pullSecret }}
       {{- end }}
       serviceAccountName: {{ include "volsync.serviceAccountName" . }}
       securityContext:
@@ -38,7 +38,7 @@ spec:
             {{- if .Values.metrics.disableAuth }}
             - --ignore-paths=/metrics
             {{- end }}
-          image: gcr.io/kubebuilder/kube-rbac-proxy:v0.8.0
+          image: {{ .Values.global.imageOverrides.kube_rbac_proxy }}
           ports:
             - containerPort: 8443
               name: https
@@ -47,14 +47,14 @@ spec:
             - --health-probe-bind-address=:8081
             - --metrics-bind-address=127.0.0.1:8080
             - --leader-elect
-            - --rclone-container-image={{ include "container-image" (list . .Values.rclone) }}
-            - --restic-container-image={{ include "container-image" (list . .Values.restic) }}
-            - --rsync-container-image={{ include "container-image" (list . .Values.rsync) }}
+            - --rclone-container-image={{ .Values.global.imageOverrides.volsync_mover_rclone }}
+            - --restic-container-image={{ .Values.global.imageOverrides.volsync_mover_restic }}
+            - --rsync-container-image={{ .Values.global.imageOverrides.volsync_mover_rsync }}
             - --scc-name={{ include "volsync.fullname" . }}-mover
           command:
             - /manager
-          image: "{{ include "container-image" (list . .Values.image) }}"
-          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          image: {{ .Values.global.imageOverrides.volsync }}
+          imagePullPolicy: {{ .Values.global.pullPolicy }}
           livenessProbe:
             httpGet:
               path: /healthz
@@ -71,7 +71,7 @@ spec:
             {{- toYaml .Values.resources | nindent 12 }}
           securityContext:
             {{- toYaml .Values.securityContext | nindent 12 }}
-      {{- with .Values.nodeSelector }}
+      {{- with .Values.hubconfig.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
       {{- end }}

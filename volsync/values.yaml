@@ -1,9 +1,20 @@
 # Default values for volsync.
-replicaCount: 1
+global:
+  pullPolicy: Always
+  pullSecret: null
+  imageOverrides:
+    volsync: ""
+    volsync_mover_rclone: ""
+    volsync_mover_restic: ""
+    volsync_mover_rsync: ""
+    kube_rbac_proxy: ""
+
+hubconfig:
+  nodeSelector: null
+  replicaCount: 1
 
 image:
   repository: quay.io/backube/volsync
-  pullPolicy: IfNotPresent
   # Overrides the image tag whose default is the chart appVersion.
   tag: ""
   # Directly specifies the SHA hash of the container image to deploy
@@ -28,7 +39,6 @@ metrics:
   # Disable auth checks when scraping metrics (allow anyone to scrape)
   disableAuth: false
 
-imagePullSecrets: []
 nameOverride: ""
 fullnameOverride: ""
 
@@ -63,8 +73,6 @@ resources:
   requests:
     cpu: 100m
     memory: 20Mi
-
-nodeSelector: {}
 
 tolerations: []
 
