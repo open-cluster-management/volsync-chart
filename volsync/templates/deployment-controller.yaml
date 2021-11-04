@@ -6,7 +6,7 @@ metadata:
     control-plane: {{ include "volsync.fullname" . }}-controller
     {{- include "volsync.labels" . | nindent 4 }}
 spec:
-  replicas: {{ .Values.hubconfig.replicaCount }}
+  replicas: {{ .Values.replicaCount }}
   selector:
     matchLabels:
       control-plane: {{ include "volsync.fullname" . }}-controller
@@ -19,12 +19,11 @@ spec:
       {{- end }}
       labels:
         control-plane: {{ include "volsync.fullname" . }}-controller
-        ocm-antiaffinity-selector: "volsync"
         {{- include "volsync.selectorLabels" . | nindent 8 }}
     spec:
-      {{- if .Values.global.pullSecret }}
+      {{- with .Values.imagePullSecrets }}
       imagePullSecrets:
-        - name: {{ .Values.global.pullSecret }}
+        {{- toYaml . | nindent 8 }}
       {{- end }}
       serviceAccountName: {{ include "volsync.serviceAccountName" . }}
       securityContext:
@@ -39,7 +38,7 @@ spec:
             {{- if .Values.metrics.disableAuth }}
             - --ignore-paths=/metrics
             {{- end }}
-          image: {{ .Values.global.imageOverrides.kube_rbac_proxy }}
+          image: gcr.io/kubebuilder/kube-rbac-proxy:v0.8.0
           ports:
             - containerPort: 8443
               name: https
@@ -48,14 +47,14 @@ spec:
             - --health-probe-bind-address=:8081
             - --metrics-bind-address=127.0.0.1:8080
             - --leader-elect
-            - --rclone-container-image={{ .Values.global.imageOverrides.volsync_mover_rclone }}
-            - --restic-container-image={{ .Values.global.imageOverrides.volsync_mover_restic }}
-            - --rsync-container-image={{ .Values.global.imageOverrides.volsync_mover_rsync }}
+            - --rclone-container-image={{ include "container-image" (list . .Values.rclone) }}
+            - --restic-container-image={{ include "container-image" (list . .Values.restic) }}
+            - --rsync-container-image={{ include "container-image" (list . .Values.rsync) }}
             - --scc-name={{ include "volsync.fullname" . }}-mover
           command:
             - /manager
-          image: {{ .Values.global.imageOverrides.volsync }}
-          imagePullPolicy: {{ .Values.global.pullPolicy }}
+          image: "{{ include "container-image" (list . .Values.image) }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
           livenessProbe:
             httpGet:
               path: /healthz
@@ -72,7 +71,7 @@ spec:
             {{- toYaml .Values.resources | nindent 12 }}
           securityContext:
             {{- toYaml .Values.securityContext | nindent 12 }}
-      {{- with .Values.hubconfig.nodeSelector }}
+      {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
       {{- end }}
@@ -80,15 +79,8 @@ spec:
       affinity:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      {{- with .Values.affinity }}
-      affinity:
-        {{ toYaml . | nindent 8 }}
-      {{- end }}
       terminationGracePeriodSeconds: 10
+      {{- with .Values.tolerations }}
       tolerations:
-        - key: dedicated
-          operator: Exists
-          effect: NoSchedule
-        - effect: NoSchedule 
-          key: node-role.kubernetes.io/infra 
-          operator: Exists
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

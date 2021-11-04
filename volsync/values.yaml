@@ -1,20 +1,9 @@
 # Default values for volsync.
-global:
-  pullPolicy: Always
-  pullSecret: null
-  imageOverrides:
-    volsync: ""
-    volsync_mover_rclone: ""
-    volsync_mover_restic: ""
-    volsync_mover_rsync: ""
-    kube_rbac_proxy: ""
-
-hubconfig:
-  nodeSelector: null
-  replicaCount: 1
+replicaCount: 1
 
 image:
   repository: quay.io/backube/volsync
+  pullPolicy: IfNotPresent
   # Overrides the image tag whose default is the chart appVersion.
   tag: ""
   # Directly specifies the SHA hash of the container image to deploy
@@ -39,6 +28,7 @@ metrics:
   # Disable auth checks when scraping metrics (allow anyone to scrape)
   disableAuth: false
 
+imagePullSecrets: []
 nameOverride: ""
 fullnameOverride: ""
 
@@ -74,36 +64,8 @@ resources:
     cpu: 100m
     memory: 20Mi
 
+nodeSelector: {}
+
 tolerations: []
 
-affinity:
-  nodeAffinity:
-    requiredDuringSchedulingIgnoredDuringExecution:
-      nodeSelectorTerms:
-      - matchExpressions:
-        - key: beta.kubernetes.io/arch
-          operator: In
-          values:
-          - amd64
-          - ppc64le
-          - s390x
-  podAntiAffinity:
-    preferredDuringSchedulingIgnoredDuringExecution:
-    - weight: 70
-      podAffinityTerm:
-        topologyKey: topology.kubernetes.io/zone
-        labelSelector:
-          matchExpressions:
-          - key: ocm-antiaffinity-selector
-            operator: In
-            values:
-            - volsync
-    - weight: 35
-      podAffinityTerm:
-        topologyKey: kubernetes.io/hostname
-        labelSelector:
-          matchExpressions:
-          - key: ocm-antiaffinity-selector
-            operator: In
-            values:
-            - volsync
+affinity: {}
