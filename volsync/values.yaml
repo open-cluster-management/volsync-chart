@@ -58,7 +58,7 @@ securityContext:
 
 resources:
   limits:
-    cpu: 100m
+    cpu: 1000m
     memory: 300Mi
   requests:
     cpu: 100m
@@ -69,3 +69,7 @@ nodeSelector: {}
 tolerations: []
 
 affinity: {}
+
+openshift:
+  # Force deployment of the SCC even if the api resource isn't detected
+  forceSCC: false
