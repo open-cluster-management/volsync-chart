@@ -4,7 +4,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.4.1
+    controller-gen.kubebuilder.io/version: v0.7.0
   creationTimestamp: null
   name: replicationdestinations.volsync.backube
 spec:
@@ -93,6 +93,7 @@ spec:
                     description: copyMethod describes how a point-in-time (PiT) image
                       of the destination volume should be created.
                     enum:
+                    - Direct
                     - None
                     - Clone
                     - Snapshot
@@ -164,6 +165,7 @@ spec:
                     description: copyMethod describes how a point-in-time (PiT) image
                       of the destination volume should be created.
                     enum:
+                    - Direct
                     - None
                     - Clone
                     - Snapshot
@@ -224,6 +226,7 @@ spec:
                     description: copyMethod describes how a point-in-time (PiT) image
                       of the destination volume should be created.
                     enum:
+                    - Direct
                     - None
                     - Clone
                     - Snapshot
@@ -378,6 +381,11 @@ spec:
               lastSyncDuration:
                 description: lastSyncDuration is the amount of time required to send
                   the most recent update.
+                type: string
+              lastSyncStartTime:
+                description: lastSyncStartTime is the time the most recent synchronization
+                  started.
+                format: date-time
                 type: string
               lastSyncTime:
                 description: lastSyncTime is the time of the most recent successful
